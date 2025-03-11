@@ -6,6 +6,9 @@ const session = require('express-session');
 const nunjucks = require('nunjucks');
 const dotenv = require('dotenv');
 const webSocket = require('./socket');
+const connect = require('./models');
+const ColorHash = require('color-hash').default;
+
 dotenv.config();
 
 const indexRouter = require('./routes');
@@ -32,6 +35,16 @@ app.use(
         },
     })
 );
+app.use((req, res, next) => {
+    if (!req.session.color) {
+        const colorHash = new ColorHash();
+        req.session.color = colorHash.hex(req.sessionID);
+        console.log(req.session.color, req.sessionID);
+    }
+    next();
+});
+
+connect();
 
 app.use('/', indexRouter);
 
@@ -54,4 +67,4 @@ const server = app.listen(app.get('port'), () => {
     console.log(app.get('port'), '번 포트에서 대기중');
 });
 
-webSocket(server);
+webSocket(server, app);

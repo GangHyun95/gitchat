@@ -1,24 +1,24 @@
 const SocketIO = require('socket.io');
 
-module.exports = (server) => {
+module.exports = (server, app) => {
     const io = SocketIO(server, { path: '/socket.io' });
+    app.set('io', io);
+    const room = io.of('/room');
+    const chat = io.of('/chat');
 
-    io.on('connection', (socket) => {
-        const req = socket.request;
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-        console.log('새로운 클라이언트 접속', ip, socket.id, req.ip);
+    room.on('connection', (socket) => {
+        console.log('room 네임스페이스 접속');
         socket.on('disconnect', () => {
-            console.log('클라이언트 접속 해제, ip');
-            clearInterval(socket.interval);
+            console.log('room 네임스페이스 접속 해제');
         });
-
-        socket.on('reply', (data) => {
-            console.log(data);
+    });
+    chat.on('connection', (socket) => {
+        console.log('chat 네임스페이스에 접속');
+        socket.on('join', (data) => {
+            socket.join(data);
         });
-        socket.on('error', console.error);
-
-        socket.interval = setInterval(() => {
-            socket.emit('news', 'Hello Socket.IO');
-        }, 3000);
+        socket.on('disconnect', () => {
+            console.log('chat 네임스페이스 접속 해제');
+        });
     });
 };
